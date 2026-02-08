@@ -1,18 +1,32 @@
 from searching_framework import Problem
 
 class DotsAndBoxes(Problem):
-    def __init__(self, dots, lines, initial):
-        super().__init__(initial)
-        self.initial=(player,opp)
-        self.dots = dots
-        self.lines = lines
+    def __init__(self, initial, goal, conquered_lines):
+        super().__init__(initial,goal)
+        self.conquered_lines = conquered_lines
 
-    def availableDots(self,dots,lines):
-        available=0
-        for d in dots:
-            if d not in lines:
-                available+=1
-        return available
+    def addLine(self, i1, i2, j1, j2):
+        lines=list(self.conquered_lines)
+        new_line=( (i1,j1) , (i2,j2) )
+        if new_line not in lines:
+            lines.append(new_line)
+        return tuple(lines)
+
+    def conquerSquares(self, line, pts):
+        (i1,j1),(i2,j2) = line
+        if i1==i2:
+            if i1<3:
+                if ((i1+1,j1),(i2+1,j2)) in self.conquered_lines and \
+                        ((i1,j1),(i1+1,j1)) in self.conquered_lines and \
+                        ((i2,j2),(i2+1,j2)) in self.conquered_lines:
+                    pts+=1
+            elif i1>0:
+                if ((i1-1,j1),(i2-1,j2)) in self.conquered_lines and \
+                        ((i1,j1),(i1-1,j1)) in self.conquered_lines and \
+                        ((i2,j2),(i2-1,j2)) in self.conquered_lines:
+                    pts+=1
+            
+                    
 
     def actions(self, state):
         return self.successor(state).keys()
@@ -22,39 +36,26 @@ class DotsAndBoxes(Problem):
 
     def successor(self, state):
         succs = dict()
-
-        pass
-        #TODO
-
+        
         return succs
 
-    def goal_test(self, state):
-        return state == self.goal
-
-    def heuristic(self, state):
-        return self.availableDots(state,self.dots,self.lines)
+    def goal_test(self, goal):
+        return self.goal == goal
 
 
-class Agent:
-    def __init__(self,lines, points):
-        self.lines = lines
-        self.points = points
-
-    def addLine(self, i1, j1, i2, j2):
-        gridLines.append(((i1, j1), (i2, j2)))
-
-    def isSquare(self):
-        for line in ():
-            if line not in self.lines : return False
-        return True
 
 if __name__ == "__main__":
-    player = Agent((),0)
-    opp = Agent((),0)
-    gridDots = list()
+    goal=0
+    conquered_lines = ()
     gridLines = list()
     for i in range(4):
         for j in range(4):
-            gridDots.append((i, j, "free"))
-    game = DotsAndBoxes(gridDots, gridLines, (player,opp))
-    print(gridDots)
+            if i+1<4:
+                gridLines.append((goal,(i,j),(i+1,j)))
+                goal+=1
+            if j+1<4:
+                gridLines.append((goal,(i,j),(i,j+1)))
+                goal+=1
+    game=DotsAndBoxes((0,0,"agent-a"),goal,conquered_lines)
+    # for line in gridLines:
+    #     print(line)
