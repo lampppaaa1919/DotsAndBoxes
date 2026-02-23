@@ -33,16 +33,13 @@ class DotsAndBoxes(Problem):
         pts = 0
         drawn_line = self.get_all_lines()[id_line]
 
-        def normalize_line(line):
-            return tuple(sorted(line))
-
         prev_lines = {}
         for id in prev_lines_ids:
             prev_lines[id]=self.get_all_lines()[id]
         prev_lines[id_line]=drawn_line
 
         ((i1, j1), (i2, j2)) = drawn_line
-        print(i1,j1,i2,j2)
+        # print(i1,j1,i2,j2)
         if i1 == i2:
             i = i1
             # linijata ja zatvara kutijata nad nea
@@ -50,14 +47,14 @@ class DotsAndBoxes(Problem):
                     and ((i - 1, j1), (i, j1)) in prev_lines.values()
                     and ((i - 1, j2), (i, j2)) in prev_lines.values()
                     and i>0):
-                print("Box above")
+                # print("Box above")
                 pts += 1
             # linijata ja zatvara kutijata pod nea
             if (((i + 1, j1), (i + 1, j2)) in prev_lines.values()
-                    and ((i + 1, j1), (i, j1)) in prev_lines.values()
-                    and ((i + 1, j2), (i, j2)) in prev_lines.values()
+                    and ((i, j1), (i + 1, j1)) in prev_lines.values()
+                    and ((i, j2), (i + 1, j2)) in prev_lines.values()
                     and i<=self.n):
-                print("Box below")
+                # print("Box below")
                 pts += 1
         elif j1 == j2:
             j = j1
@@ -66,14 +63,14 @@ class DotsAndBoxes(Problem):
                     and ((i1, j - 1), (i1, j)) in prev_lines.values()
                     and ((i2, j - 1), (i2, j)) in prev_lines.values()
                     and j>0):
-                print("Box left")
+                # print("Box left")
                 pts += 1
             # linijata ja zatvara desnata kutija
             if (((i1, j + 1), (i2, j + 1)) in prev_lines.values()
-                    and ((i1, j + 1), (i1, j)) in prev_lines.values()
-                    and ((i2, j + 1), (i2, j)) in prev_lines.values()
+                    and ((i1, j), (i1, j+1)) in prev_lines.values()
+                    and ((i2, j), (i2, j+1)) in prev_lines.values()
                     and j<=self.m):
-                print("Box right")
+                # print("Box right")
                 pts += 1
         return (pts, prev_lines)
 
@@ -90,7 +87,10 @@ class DotsAndBoxes(Problem):
 
     def successor(self, state):
         succs = dict()
-        # ptsPlr 0 ptsOpp 0 turn agent-a conqueredLines ()
+        # ptsPlr 0
+        # ptsOpp 0
+        # turn agent-a
+        # conqueredLines ()
         plr, opp, turn, conc_lines = state
         allLines = self.get_all_lines()
         available_lines = frozenset(allLines.keys()) - frozenset(conc_lines)
@@ -144,26 +144,22 @@ if __name__ == "__main__":
 
     # testiranje igra so A* algoritam
 
+    playgame = astar_search(game)
+    print(playgame.solve())
+    print(playgame.solution())
 
-    # print(f"Number of squares: {game.num_squares()}")
-    # print(f"Number of lines: {game.get_all_lines_length()}")
-    # print(game.get_all_lines())
-    # playgame = astar_search(game)
-    # print(playgame.solve())
-    # print(playgame.solution())
+    state = game.initial
+    while not game.goal_test(state):
+        available = game.actions(state)
+        chosen_line = random.choice(available)
+        curr_agent = state[2]
+        state = game.result(state, chosen_line)
+        print(f"{curr_agent} drew line {chosen_line}, scores: Plr={state[0]} Opp={state[1]}")
 
-    # state = game.initial
-    # while not game.goal_test(state):
-    #     available = game.actions(state)
-    #     chosen_line = random.choice(available)
-    #     curr_agent = state[2]
-    #     state = game.result(state, chosen_line)
-    #     print(f"{curr_agent} drew line {chosen_line}, scores: Plr={state[0]} Opp={state[1]}")
-    #
-    # plr, opp, _, _ = state
-    # print(f"Game over! Final scores -> Plr: {plr}, Opp: {opp}")
-    # winner = "Plr" if plr > opp else "Opp" if opp > plr else "Draw"
-    # print(f"Winner: {winner}")
+    plr, opp, _, _ = state
+    print(f"Game over! Final scores -> Plr: {plr}, Opp: {opp}")
+    winner = "Plr" if plr > opp else "Opp" if opp > plr else "Draw"
+    print(f"Winner: {winner}")
 
     # lines_dict = game.get_all_lines()
     # print(f"Lines: {lines_dict}")
@@ -189,5 +185,5 @@ if __name__ == "__main__":
     # print("HEURISTIC")
     # h = game.h(Node((0,0,"agent-a",frozenset({2,4}))))
     # print(h)
-    game_test_case=game.close_boxes(1,frozenset({0,6,7,9,2,10}))
-    print(game_test_case[0])
+    # game_test_case=game.close_boxes(7,frozenset({3,4,8}))
+    # print(game_test_case[0])
