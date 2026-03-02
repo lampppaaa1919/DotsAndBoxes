@@ -1,6 +1,9 @@
 import random
+from unittest import case
+#pyGad
 
-from searching_framework import Problem, astar_search, Node
+from searching_framework import Problem, astar_search
+from searching_framework.expectimax import *
 
 
 class DotsAndBoxes(Problem):
@@ -74,6 +77,15 @@ class DotsAndBoxes(Problem):
                 pts += 1
         return (pts, prev_lines)
 
+    def num_available_lines(self,box,conq_lines):
+        n = 0
+        i,j = box
+        if ((i,j),(i,j+1)) in conq_lines.values(): n += 1
+        if ((i,j),(i+1,j)) in conq_lines.values(): n += 1
+        if ((i,j+1),(i+1,j+1)) in conq_lines.values(): n += 1
+        if ((i+1,j),(i+1,j+1)) in conq_lines.values(): n += 1
+        return n
+
     def actions(self, state):
         plr, opp, turn, drawn = state
         available = [id_line for id_line in self.get_all_lines() if id_line not in drawn]
@@ -94,18 +106,44 @@ class DotsAndBoxes(Problem):
         plr, opp, turn, conc_lines = state
         allLines = self.get_all_lines()
         available_lines = frozenset(allLines.keys()) - frozenset(conc_lines)
-
-        for id_line in available_lines:
-            # luckyLineId = random.choice(list(available_lines))
-            # luckyLine = allLines[luckyLineId]
-            # new_conquered = conc_lines | frozenset([id_line])
-            # drawn_set = {allLines[l_id] for l_id in new_conquered}
-            newPts = self.close_boxes(id_line, frozenset(conc_lines))[0]
-            new_conquered = self.close_boxes(id_line, frozenset(conc_lines))[1]
-            if turn == "agent-a":
-                succs[f"Plr draws line {id_line}"] = (plr + newPts, opp, "agent-b", frozenset(new_conquered))
-            else:
+        if turn == "agent-a":
+            lucky_line_id = int(input())
+            lucky_line = allLines[lucky_line_id]
+            new_conquered = conc_lines | frozenset([lucky_line])
+            newPts = self.close_boxes(lucky_line_id, frozenset(conc_lines))[0]
+            succs[f"Plr draws line {lucky_line_id}"] = (plr + newPts, opp, "agent-b", frozenset(new_conquered))
+        else:
+            total = 0
+            r = root(state.node)
+            open_box = new_node(0,root)
+            one_line_box = new_node(1,root)
+            two_line_box = new_node(2,root)
+            three_line_box = new_node(3,root)
+            for id_line in available_lines:
+                newPts = self.close_boxes(id_line, frozenset(conc_lines))[0]
+                match newPts:
+                    case 3: new_node(self.h(state),three_line_box)
+                    case 2: new_node(_,two_line_box)
+                    case 1: new_node(_,one_line_box)
+                    case 0: new_node(_,open_box)
+                #TODO h namesto _
+                total += newPts
+                new_conquered = self.close_boxes(id_line, frozenset(conc_lines))[1]
                 succs[f"Opp draws line {id_line}"] = (plr, opp + newPts, "agent-a", frozenset(new_conquered))
+
+        # for id_line in available_lines:
+        #     # luckyLineId = random.choice(list(available_lines))
+        #     # luckyLine = allLines[luckyLineId]
+        #     # new_conquered = conc_lines | frozenset([id_line])
+        #     # drawn_set = {allLines[l_id] for l_id in new_conquered}
+        #     newPts = self.close_boxes(id_line, frozenset(conc_lines))[0]
+        #     new_conquered = self.close_boxes(id_line, frozenset(conc_lines))[1]
+        #     if turn == "agent-a":
+        #         succs[f"Plr draws line {id_line}"] = (plr + newPts, opp, "agent-b", frozenset(new_conquered))
+        #     else:
+        #         succs[f"Opp draws line {id_line}"] = (plr, opp + newPts, "agent-a", frozenset(new_conquered))
+
+
         return succs
 
     def goal_test(self, state):
