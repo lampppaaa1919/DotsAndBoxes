@@ -1,8 +1,8 @@
 import random
-from unittest import case
-#pyGad
+import math
+import pygad
 
-from searching_framework import Problem, astar_search
+from searching_framework import Problem, astar_search, minimax
 from searching_framework.expectimax import *
 
 
@@ -103,33 +103,36 @@ class DotsAndBoxes(Problem):
         # ptsOpp 0
         # turn agent-a
         # conqueredLines ()
-        plr, opp, turn, conc_lines = state
+        plr, opp, turn, conq_lines = state
         allLines = self.get_all_lines()
-        available_lines = frozenset(allLines.keys()) - frozenset(conc_lines)
+        available_lines = frozenset(allLines.keys()) - frozenset(conq_lines)
         if turn == "agent-a":
-            lucky_line_id = int(input())
-            lucky_line = allLines[lucky_line_id]
-            new_conquered = conc_lines | frozenset([lucky_line])
-            newPts = self.close_boxes(lucky_line_id, frozenset(conc_lines))[0]
-            succs[f"Plr draws line {lucky_line_id}"] = (plr + newPts, opp, "agent-b", frozenset(new_conquered))
+            for line_id in available_lines:
+                next_step = minimax.minimax(self, state, 3, True)
+                best_step = minimax.best_move(self, state, 3)
+                new_pts, new_conq = self.close_boxes(line_id, conq_lines)
+                succs[f"Plr draws line {line_id}"] = (plr+new_pts, opp, "agent-b",frozenset(new_conq))
         else:
-            total = 0
-            r = root(state.node)
-            open_box = new_node(0,root)
-            one_line_box = new_node(1,root)
-            two_line_box = new_node(2,root)
-            three_line_box = new_node(3,root)
+            # total = 0
+            # r = root(state.node)
+            # open_box = new_node(0,root)
+            # one_line_box = new_node(1,root)
+            # two_line_box = new_node(2,root)
+            # three_line_box = new_node(3,root)
             for id_line in available_lines:
-                newPts = self.close_boxes(id_line, frozenset(conc_lines))[0]
-                match newPts:
-                    case 3: new_node(self.h(state),three_line_box)
-                    case 2: new_node(_,two_line_box)
-                    case 1: new_node(_,one_line_box)
-                    case 0: new_node(_,open_box)
-                #TODO h namesto _
-                total += newPts
-                new_conquered = self.close_boxes(id_line, frozenset(conc_lines))[1]
-                succs[f"Opp draws line {id_line}"] = (plr, opp + newPts, "agent-a", frozenset(new_conquered))
+                # newPts = self.close_boxes(id_line, frozenset(conq_lines))[0]
+                # match newPts:
+                #     case 3: new_node(self.h(state),three_line_box)
+                #     case 2: new_node(self.h(state),two_line_box)
+                #     case 1: new_node(self.h(state),one_line_box)
+                #     case 0: new_node(self.h(state),open_box)
+                # total += newPts
+                # new_conquered = self.close_boxes(id_line, frozenset(conq_lines))[1]
+                next_step = minimax.minimax(self, state, 3, False)
+                best_step = minimax.best_move(self, state, 3)
+                new_pts, new_conq = self.close_boxes(id_line, conq_lines)
+                succs[f"Opp draws line {id_line}"] = (plr, opp + new_pts, "agent-a", frozenset(new_conq))
+        return succs
 
         # for id_line in available_lines:
         #     # luckyLineId = random.choice(list(available_lines))
@@ -143,8 +146,6 @@ class DotsAndBoxes(Problem):
         #     else:
         #         succs[f"Opp draws line {id_line}"] = (plr, opp + newPts, "agent-a", frozenset(new_conquered))
 
-
-        return succs
 
     def goal_test(self, state):
         #ptsPlr, ptsOpp, turn, drawnLines = state
