@@ -11,22 +11,23 @@ class DotsAndBoxes(Problem):
         super().__init__(initial)
         self.n = n
         self.m = m
+        self.all_lines = self.get_all_lines()
 
     def get_all_lines(self):
         allLines = dict()
         totalLines = 0
         for i in range(self.n):
-            for j in range(self.m+1):
+            for j in range(self.m + 1):
                 allLines[totalLines] = ((i, j), (i + 1, j))
                 totalLines += 1
         for j in range(self.m):
-            for i in range(self.n+1):
+            for i in range(self.n + 1):
                 allLines[totalLines] = ((i, j), (i, j + 1))
                 totalLines += 1
         return allLines
 
     def get_all_lines_length(self):
-        allLines = self.get_all_lines()
+        allLines = self.all_lines
         return len(allLines)
 
     def num_squares(self):
@@ -34,12 +35,12 @@ class DotsAndBoxes(Problem):
 
     def close_boxes(self, id_line, prev_lines_ids):
         pts = 0
-        drawn_line = self.get_all_lines()[id_line]
+        drawn_line = self.all_lines[id_line]
 
         prev_lines = {}
         for id in prev_lines_ids:
-            prev_lines[id]=self.get_all_lines()[id]
-        prev_lines[id_line]=drawn_line
+            prev_lines[id] = self.all_lines[id]
+        prev_lines[id_line] = drawn_line
 
         ((i1, j1), (i2, j2)) = drawn_line
         # print(i1,j1,i2,j2)
@@ -49,14 +50,14 @@ class DotsAndBoxes(Problem):
             if (((i - 1, j1), (i - 1, j2)) in prev_lines.values()
                     and ((i - 1, j1), (i, j1)) in prev_lines.values()
                     and ((i - 1, j2), (i, j2)) in prev_lines.values()
-                    and i>0):
+                    and i > 0):
                 # print("Box above")
                 pts += 1
             # linijata ja zatvara kutijata pod nea
             if (((i + 1, j1), (i + 1, j2)) in prev_lines.values()
                     and ((i, j1), (i + 1, j1)) in prev_lines.values()
                     and ((i, j2), (i + 1, j2)) in prev_lines.values()
-                    and i<=self.n):
+                    and i <= self.n):
                 # print("Box below")
                 pts += 1
         elif j1 == j2:
@@ -65,26 +66,26 @@ class DotsAndBoxes(Problem):
             if (((i1, j - 1), (i2, j - 1)) in prev_lines.values()
                     and ((i1, j - 1), (i1, j)) in prev_lines.values()
                     and ((i2, j - 1), (i2, j)) in prev_lines.values()
-                    and j>0):
+                    and j > 0):
                 # print("Box left")
                 pts += 1
             # linijata ja zatvara desnata kutija
             if (((i1, j + 1), (i2, j + 1)) in prev_lines.values()
-                    and ((i1, j), (i1, j+1)) in prev_lines.values()
-                    and ((i2, j), (i2, j+1)) in prev_lines.values()
-                    and j<=self.m):
+                    and ((i1, j), (i1, j + 1)) in prev_lines.values()
+                    and ((i2, j), (i2, j + 1)) in prev_lines.values()
+                    and j <= self.m):
                 # print("Box right")
                 pts += 1
-        return (pts, prev_lines)
+        return pts, prev_lines
 
-    def num_available_lines(self,box,conq_lines):
+    def num_available_lines(self, box, conq_lines):
         n = 0
-        i,j = box
-        if ((i,j),(i,j+1)) in conq_lines.values(): n += 1
-        if ((i,j),(i+1,j)) in conq_lines.values(): n += 1
-        if ((i,j+1),(i+1,j+1)) in conq_lines.values(): n += 1
-        if ((i+1,j),(i+1,j+1)) in conq_lines.values(): n += 1
-        return n
+        i, j = box
+        if ((i, j), (i, j + 1)) in conq_lines.values(): n += 1
+        if ((i, j), (i + 1, j)) in conq_lines.values(): n += 1
+        if ((i, j + 1), (i + 1, j + 1)) in conq_lines.values(): n += 1
+        if ((i + 1, j), (i + 1, j + 1)) in conq_lines.values(): n += 1
+        return self.get_all_lines_length() - n
 
     def actions(self, state):
         plr, opp, turn, drawn = state
@@ -98,107 +99,58 @@ class DotsAndBoxes(Problem):
         return self.successor(state)[action]
 
     def successor(self, state):
-        succs = dict()
-        # ptsPlr 0
-        # ptsOpp 0
-        # turn agent-a
-        # conqueredLines ()
+        succs = {}
         plr, opp, turn, conq_lines = state
-        allLines = self.get_all_lines()
-        available_lines = frozenset(allLines.keys()) - frozenset(conq_lines)
-        if turn == "agent-a":
-            for line_id in available_lines:
-                next_step = minimax.minimax(self, state, 3, True)
-                best_step = minimax.best_move(self, state, 3)
-                new_pts, new_conq = self.close_boxes(line_id, conq_lines)
-                succs[f"Plr draws line {line_id}"] = (plr+new_pts, opp, "agent-b",frozenset(new_conq))
-        else:
-            # total = 0
-            # r = root(state.node)
-            # open_box = new_node(0,root)
-            # one_line_box = new_node(1,root)
-            # two_line_box = new_node(2,root)
-            # three_line_box = new_node(3,root)
-            for id_line in available_lines:
-                # newPts = self.close_boxes(id_line, frozenset(conq_lines))[0]
-                # match newPts:
-                #     case 3: new_node(self.h(state),three_line_box)
-                #     case 2: new_node(self.h(state),two_line_box)
-                #     case 1: new_node(self.h(state),one_line_box)
-                #     case 0: new_node(self.h(state),open_box)
-                # total += newPts
-                # new_conquered = self.close_boxes(id_line, frozenset(conq_lines))[1]
-                next_step = minimax.minimax(self, state, 3, False)
-                best_step = minimax.best_move(self, state, 3)
-                new_pts, new_conq = self.close_boxes(id_line, conq_lines)
-                succs[f"Opp draws line {id_line}"] = (plr, opp + new_pts, "agent-a", frozenset(new_conq))
+        allLines = self.all_lines
+        available_lines = set(allLines.keys()) - set(conq_lines)
+        for line_id in available_lines:
+            new_pts, new_conq = self.close_boxes(line_id, conq_lines)
+            if turn == "agent-a":
+                new_state = (plr + new_pts, opp, "agent-b", frozenset(new_conq))
+                succs[f"Plr draws line {line_id}"] = new_state
+            else:
+                new_state = (plr, opp + new_pts, "agent-a", frozenset(new_conq))
+                succs[f"Opp draws line {line_id}"] = new_state
         return succs
 
-        # for id_line in available_lines:
-        #     # luckyLineId = random.choice(list(available_lines))
-        #     # luckyLine = allLines[luckyLineId]
-        #     # new_conquered = conc_lines | frozenset([id_line])
-        #     # drawn_set = {allLines[l_id] for l_id in new_conquered}
-        #     newPts = self.close_boxes(id_line, frozenset(conc_lines))[0]
-        #     new_conquered = self.close_boxes(id_line, frozenset(conc_lines))[1]
-        #     if turn == "agent-a":
-        #         succs[f"Plr draws line {id_line}"] = (plr + newPts, opp, "agent-b", frozenset(new_conquered))
-        #     else:
-        #         succs[f"Opp draws line {id_line}"] = (plr, opp + newPts, "agent-a", frozenset(new_conquered))
-
-
     def goal_test(self, state):
-        #ptsPlr, ptsOpp, turn, drawnLines = state
+        # ptsPlr, ptsOpp, turn, drawnLines = state
         return len(state[3]) == self.get_all_lines_length()
 
     def h(self, node):
-        state = node.state
+
         ptsPlr, ptsOpp, turn, drawnLinesIds = state
         drawnLines = {}
         for id in drawnLinesIds:
-            drawnLines[id]=self.get_all_lines()[id]
+            drawnLines[id] = self.all_lines[id]
         almost = 0
-        for i in range(self.n+1):
-            for j in range(self.m+1):
+        for i in range(self.n):
+            for j in range(self.m):
                 ctr = 0
-                if ((i,j),(i,j+1)) in drawnLines.values(): ctr+=1
-                if ((i,j),(i+1,j)) in drawnLines.values(): ctr+=1
-                if ((i+1,j),(i+1,j+1)) in drawnLines.values(): ctr+=1
-                if ((i,j+1),(i+1,j+1)) in drawnLines.values(): ctr+=1
-                if ctr == 3: almost+=1
+                if ((i, j), (i, j + 1)) in drawnLines.values(): ctr += 1
+                if ((i, j), (i + 1, j)) in drawnLines.values(): ctr += 1
+                if ((i + 1, j), (i + 1, j + 1)) in drawnLines.values(): ctr += 1
+                if ((i, j + 1), (i + 1, j + 1)) in drawnLines.values(): ctr += 1
+                if ctr == 3: almost += 1
 
-        conqueredBoxes = ptsPlr + ptsOpp
-        remainingBoxes = self.num_squares() - conqueredBoxes - almost
-        return remainingBoxes
+        return (ptsPlr - ptsOpp) + almost
 
 
 if __name__ == "__main__":
-    game = DotsAndBoxes((0, 0, "agent-a", frozenset()), 2, 2)
-    print(game.get_all_lines())
-    # goal = 0
-    # gridLines = game.getAllLines()
-    # for line in range(len(gridLines)):
-    #     print(gridLines[line])
-    # print(gridLines)
-
-    # testiranje igra so A* algoritam
-
-    playgame = astar_search(game)
-    print(playgame.solve())
-    print(playgame.solution())
-
+    game = DotsAndBoxes((0, 0, "agent-a", frozenset()), 3, 5)
     state = game.initial
     while not game.goal_test(state):
-        available = game.actions(state)
-        chosen_line = random.choice(available)
-        curr_agent = state[2]
-        state = game.result(state, chosen_line)
-        print(f"{curr_agent} drew line {chosen_line}, scores: Plr={state[0]} Opp={state[1]}")
+        plr, opp, turn, _ = state
+        if turn == "agent-a":
+            action = minimax.best_move(game, state, depth=3)
+        else:
+            action = random.choice(game.actions(state))
+        state = game.result(state, action)
+        print(f"{action}")
+        print(f"Plr: {state[0]} Opp: {state[1]}")
 
-    plr, opp, _, _ = state
-    print(f"Game over! Final scores -> Plr: {plr}, Opp: {opp}")
-    winner = "Plr" if plr > opp else "Opp" if opp > plr else "Draw"
-    print(f"Winner: {winner}")
+
+
 
     # lines_dict = game.get_all_lines()
     # print(f"Lines: {lines_dict}")

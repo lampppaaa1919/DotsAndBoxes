@@ -1,5 +1,6 @@
 """se presmetuvaat site mozni potezi vo partija igra"""
 import math
+import numpy as np
 
 
 def minimax(game, state, depth, is_maximizing):
@@ -7,13 +8,15 @@ def minimax(game, state, depth, is_maximizing):
         return game.h(state)
     succs = game.successor(state)
     if is_maximizing:
-        maxEval = -int("inf")
+        maxEval = -np.inf
+        maxState = state
         for action, new_state in succs.items():
             eval = minimax(game, new_state, depth - 1, False)
             maxEval = max(maxEval, eval)
         return maxEval
     else:
-        minEval = int("inf")
+        minEval = np.inf
+        minState = state
         for action, new_state in succs.items():
             eval = minimax(game, new_state, depth - 1, True)
             minEval = min(minEval, eval)
@@ -28,7 +31,7 @@ def best_move(game, state, depth):
         if eval > best_val:
             best_val = eval
             best_action = action
-        return best_action
+    return best_action
 
 """se presmetuvaat site najdobri potezi vo partija igra"""
 
