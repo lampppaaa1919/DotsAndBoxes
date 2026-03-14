@@ -76,7 +76,7 @@ class DotsAndBoxes(Problem):
                     and j <= self.m):
                 # print("Box right")
                 pts += 1
-        return pts, prev_lines
+        return pts, prev_lines.keys()
 
     def num_available_lines(self, box, conq_lines):
         n = 0
@@ -117,12 +117,13 @@ class DotsAndBoxes(Problem):
         # ptsPlr, ptsOpp, turn, drawnLines = state
         return len(state[3]) == self.get_all_lines_length()
 
-    def h(self, node):
+    def h(self, state):
 
         ptsPlr, ptsOpp, turn, drawnLinesIds = state
         drawnLines = {}
         for id in drawnLinesIds:
             drawnLines[id] = self.all_lines[id]
+
         almost = 0
         for i in range(self.n):
             for j in range(self.m):
@@ -137,20 +138,20 @@ class DotsAndBoxes(Problem):
 
 
 if __name__ == "__main__":
-    game = DotsAndBoxes((0, 0, "agent-a", frozenset()), 3, 5)
+    game = DotsAndBoxes((0, 0, "agent-a", frozenset()), 3, 3)
     state = game.initial
+    plr, opp, turn, drawn_set = state
     while not game.goal_test(state):
-        plr, opp, turn, _ = state
+        plr, opp, turn, drawn_set = state
         if turn == "agent-a":
-            action = minimax.best_move(game, state, depth=3)
+            action = minimax.best_move(game, state, depth=3, is_maximizing=True)
         else:
-            action = random.choice(game.actions(state))
+            action = minimax.best_move(game, state, depth=3, is_maximizing=False)
         state = game.result(state, action)
         print(f"{action}")
-        print(f"Plr: {state[0]} Opp: {state[1]}")
-
-
-
+        print(f"Plr: {plr} Opp: {opp}")
+    winner = "PLR" if plr>opp else "OPP" if opp>plr else "DRAW"
+    print(f"WINNER: {winner}")
 
     # lines_dict = game.get_all_lines()
     # print(f"Lines: {lines_dict}")
