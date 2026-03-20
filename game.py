@@ -57,7 +57,7 @@ class DotsAndBoxes(Problem):
             if (((i + 1, j1), (i + 1, j2)) in prev_lines.values()
                     and ((i, j1), (i + 1, j1)) in prev_lines.values()
                     and ((i, j2), (i + 1, j2)) in prev_lines.values()
-                    and i <= self.n):
+                    and i < self.n):
                 # print("Box below")
                 pts += 1
         elif j1 == j2:
@@ -73,10 +73,10 @@ class DotsAndBoxes(Problem):
             if (((i1, j + 1), (i2, j + 1)) in prev_lines.values()
                     and ((i1, j), (i1, j + 1)) in prev_lines.values()
                     and ((i2, j), (i2, j + 1)) in prev_lines.values()
-                    and j <= self.m):
+                    and j < self.m):
                 # print("Box right")
                 pts += 1
-        return pts, prev_lines.keys()
+        return pts, set(prev_lines.keys())
 
     def num_available_lines(self, box, conq_lines):
         n = 0
@@ -89,7 +89,7 @@ class DotsAndBoxes(Problem):
 
     def actions(self, state):
         plr, opp, turn, drawn = state
-        available = [id_line for id_line in self.get_all_lines() if id_line not in drawn]
+        available = [id_line for id_line in self.all_lines if id_line not in drawn]
         if turn == "agent-a":
             return [f"Plr draws line {i}" for i in available]
         else:
@@ -142,12 +142,17 @@ if __name__ == "__main__":
     state = game.initial
     plr, opp, turn, drawn_set = state
     while not game.goal_test(state):
-        plr, opp, turn, drawn_set = state
         if turn == "agent-a":
-            action = minimax.best_move(game, state, depth=3, is_maximizing=True)
+
+            action = minimax.best_move(game, state, depth=3, is_maximizing=True,2)
+            # action = random.choice(game.actions(state))
+            #genetski - ucenje
         else:
             action = minimax.best_move(game, state, depth=3, is_maximizing=False)
+            # action = random.choice(game.actions(state))
+            #genetski - testiranje
         state = game.result(state, action)
+        plr, opp, turn, drawn_set = state
         print(f"{action}")
         print(f"Plr: {plr} Opp: {opp}")
     winner = "PLR" if plr>opp else "OPP" if opp>plr else "DRAW"
