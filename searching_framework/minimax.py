@@ -55,7 +55,7 @@ def minimax_prune(game, state, depth, is_maximizing, alpha=ALPHA, beta=BETA):
 def minimax_asc(game, state, depth, is_maximizing, alpha=ALPHA, beta=BETA):
 
     if depth == 0 or game.goal_test(state):
-        return game.h(state)
+        return game.h(state,alpha,beta)
 
     succs = game.successor(state)
 
