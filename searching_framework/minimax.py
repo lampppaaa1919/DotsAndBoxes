@@ -1,4 +1,3 @@
-"""se presmetuvaat site mozni potezi vo partija igra"""
 import math
 import numpy as np
 
@@ -6,108 +5,124 @@ ALPHA = -np.inf
 BETA = np.inf
 
 
-def minimax(game, state, depth, is_maximizing):
+def minimax(game, state, depth, is_maximizing, alpha=ALPHA, beta=BETA):
+
     if depth == 0 or game.goal_test(state):
         return game.h(state)
+
     succs = game.successor(state)
+
     if is_maximizing:
         maxEval = ALPHA
         for action, new_state in succs.items():
-            eval = minimax(game, new_state, depth - 1, False)
+            eval = minimax(game, new_state, depth - 1, False, alpha, beta)
             maxEval = max(maxEval, eval)
+            alpha = max(alpha, eval)
         return maxEval
     else:
         minEval = BETA
         for action, new_state in succs.items():
-            eval = minimax(game, new_state, depth - 1, True)
+            eval = minimax(game, new_state, depth - 1, True,alpha,beta)
             minEval = min(minEval, eval)
+            beta = min(beta, eval)
         return minEval
 
-"""se presmetuvaat site najdobri potezi vo partija igra"""
+def minimax_prune(game, state, depth, is_maximizing, alpha=ALPHA, beta=BETA):
 
-def minimax_ab(state, depth, alpha, beta, turn):
-    if depth == 0 or state.isGoal:
-        return state
-    if turn == "agent-a":
-        maxEval = alpha
-        for succ in state.succs:
-            eval = minimax_ab(succ, depth - 1, alpha, beta, "agent-b")
+    if depth == 0 or game.goal_test(state):
+        return game.h(state)
+
+    succs = game.successor(state)
+    if is_maximizing:
+        max_eval = ALPHA
+        for action, new_state in succs.items():
+            eval = minimax(game, new_state, depth - 1, False, alpha, beta)
+            max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
             if beta <= alpha:
                 break
-        return maxEval
+        return max_eval
     else:
-        minEval = int("inf")
-        for succ in state.succs:
-            eval = minimax_ab(succ, depth - 1, alpha, beta, "agent-a")
+        minEval = BETA
+        for action, new_state in succs.items():
+            eval = minimax(game, new_state, depth - 1, True,alpha,beta)
+            minEval = min(minEval, eval)
             beta = min(beta, eval)
             if beta <= alpha:
                 break
         return minEval
 
+def minimax_asc(game, state, depth, is_maximizing, alpha=ALPHA, beta=BETA):
 
-"""se presmetuvaat najdobrite potezi podredeni po volja na agent A - igrach"""
+    if depth == 0 or game.goal_test(state):
+        return game.h(state)
 
+    succs = game.successor(state)
 
-def minimax_ab_sorted(state, depth, alpha, beta, turn):
-    if depth == 0 or state.isGoal:
-        return state
-    if turn == "agent-a":
-        maxEval = -int("inf")
-        sorted_succs = sorted(state.succs, key=(lambda succ: succ.value))
-        for succ in sorted_succs:
-            eval = minimax_ab(succ, depth - 1, alpha, beta, "agent-b")
+    ordered = sorted(succs.items(),
+                     key=lambda i: game.h(i[1]),
+                     reverse=False)
+
+    if is_maximizing:
+        maxEval = ALPHA
+        for action, new_state in ordered:
+            eval = minimax_asc(game, new_state, depth - 1, False, alpha,beta)
+            maxEval = max(maxEval, eval)
             alpha = max(alpha, eval)
             if beta <= alpha:
                 break
         return maxEval
     else:
-        minEval = int("inf")
-        sorted_succs = sorted(state.succs, key=(lambda succ: succ.value))
-        for succ in sorted_succs:
-            eval = minimax_ab_sorted(succ, depth - 1, alpha, beta, "agent-a")
+        min_eval = BETA
+        for action, new_state in ordered:
+            eval = minimax_asc(game, new_state, depth - 1, True, alpha, beta)
+            min_eval = min(min_eval, eval)
             beta = min(beta, eval)
             if beta <= alpha:
                 break
-        return minEval
+        return min_eval
 
+def minimax_desc(game, state, depth, is_maximizing, alpha=ALPHA, beta=BETA):
 
-"""se presmetuvaat najdobrite potezi podredeni po volja na agent B - protivnik"""
+    if depth == 0 or game.goal_test(state):
+        return game.h(state)
 
+    succs = game.successor(state)
 
-def minimax_ab_sorted_r(state, depth, alpha, beta, turn):
-    if depth == 0 or state.isGoal:
-        return state
-    if turn == "agent-a":
-        maxEval = -int("inf")
-        sorted_succs = sorted(state.succs, key=(lambda succ: succ.value), reverse=True)
-        for succ in sorted_succs:
-            eval = minimax_ab(succ, depth - 1, alpha, beta, "agent-b")
+    ordered = sorted(succs.items(), key=lambda i: game.h(i[1]), reverse=is_maximizing)
+
+    if is_maximizing:
+        maxEval = ALPHA
+        for action, new_state in ordered:
+            eval = minimax_desc(game, new_state, depth - 1, False, alpha,beta)
+            maxEval = max(maxEval, eval)
             alpha = max(alpha, eval)
             if beta <= alpha:
                 break
         return maxEval
     else:
-        minEval = int("inf")
-        sorted_succs = sorted(state.succs, key=(lambda succ: succ.value), reverse=True)
-        for succ in sorted_succs:
-            eval = minimax_ab_sorted(succ, depth - 1, alpha, beta, "agent-a")
+        minEval = BETA
+        for action, new_state in ordered:
+            eval = minimax_desc(game, new_state, depth - 1, False, alpha, beta)
+            min_eval = min(minEval, eval)
             beta = min(beta, eval)
             if beta <= alpha:
                 break
         return minEval
 
-def best_move(game, state, depth, is_maximizing, case = 1):
-    best_val = -math.inf
-    eval = None
+def best_move(game, state, depth, is_maximizing, case = 2):
+    best_val = ALPHA
     best_action = None
     successors = game.successor(state)
     for action, new_state in successors.items():
-        match case:
-            case 1: eval = minimax(game, new_state, depth - 1, is_maximizing)
-            case 2: eval = minimax_ab(game, new_state, depth - 1, ALPHA, BETA)
-            case 3: eval = minimax_ab_sorted(game, new_state, depth - 1, ALPHA, BETA)
-            case 4: eval = minimax_ab_sorted_r(game, new_state, depth - 1, ALPHA, BETA)
+
+        eval = BETA
+
+        if case ==1: eval = minimax(game, new_state, depth - 1, not is_maximizing)
+        elif case==2: eval = minimax_prune(game, new_state, depth - 1, not is_maximizing)
+        elif case==3: eval = minimax_asc(game, new_state, depth - 1, not is_maximizing)
+        elif case==4: eval = minimax_desc(game, new_state, depth - 1, not is_maximizing)
+
         if eval > best_val:
             best_val = eval
             best_action = action

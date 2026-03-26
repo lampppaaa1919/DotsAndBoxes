@@ -1,65 +1,61 @@
 import random
 import pygad
-import numpy as np
+import minimax
+from game import DotsAndBoxes as dnb, play_game
 
-#alpha, beta, depth
-function_inputs = [4,-2,3.5,5,-11,-4.7]
-desired_output = 44
+
+num_generations = 5
+num_genomes = 6
+games_per_fitness = 3
+depth_min, depth_max = 1, 3
+
+def generate_pop(num_genomes):
+    population = []
+    for _ in range(num_genomes):
+        alpha = random.uniform(-5, 5)
+        beta = random.uniform(-5, 5)
+        depth = random.randint(depth_min, depth_max)
+        population.append([alpha, beta, depth])
+    return population
 
 def fitness_func(ga_instance, solution, solution_idx):
-    output = np.sum(solution*function_inputs)
-    fitness = 1.0 / np.abs(output - desired_output)
-    return fitness
-
-fitness_function = fitness_func
-
-num_generations = 50
-num_parents_mating = 4
-
-sol_per_pop = 8
-num_genes = len(function_inputs)
-
-init_range_low = -2
-init_range_high = 5
-
-parent_selection_type = "sss"
-keep_parents = 1
-
-crossover_type = "single_point"
-
-mutation_type = "random"
-mutation_percent_genes = 10
-
-ga_instance = pygad.GA(num_generations=num_generations,
-                       num_parents_mating=num_parents_mating,
-                       fitness_func=fitness_function,
-                       sol_per_pop=sol_per_pop,
-                       num_genes=num_genes,
-                       init_range_low=init_range_low,
-                       init_range_high=init_range_high,
-                       parent_selection_type=parent_selection_type,
-                       keep_parents=keep_parents,
-                       crossover_type=crossover_type,
-                       mutation_type=mutation_type,
-                       mutation_percent_genes=mutation_percent_genes)
+    alpha, beta, depth = solution
+    depth = max(1, int(depth))
+    score = 0
+    for _ in range(games_per_fitness):
+        score += play_game(alpha, beta, depth)
+    return score
 
 
+def on_generation(ga_instance):
+    best_solution, best_fitness, _ = ga_instance.best_solution()
+    print(f"Generation {ga_instance.generations_completed}: "
+          f"Best fitness = {best_fitness:.2f}, "
+          f"Params = {best_solution}")
 
 
-# def crossover(example1, example2, n):
-#     return example1[:n] + example2[n:]
-#
-#
-# def mutate(example, chance, n, m):
-#     choose_vals = chance * len(example)
-#     for _ in range(choose_vals):
-#         mutate_val = int(random.random()) * len(example)
-#         if mutate_val % 2 == 0:
-#             example[mutate_val] = int(random.random()) * n
-#         else:
-#             example[mutate_val] = int(random.random()) * m
-#
-#
-# def fitness(example, n, m):
-#     (i1, j1), (i2, j2) = example
-#     return abs(i1 - n / 2) + abs(j1 - m / 2) + abs(i2 - n / 2) + abs(j2 - m / 2)
+if __name__ == "__main__":
+    initial_population = generate_pop(num_genomes)
+
+    ga_instance = pygad.GA(
+        num_generations=num_generations,
+        num_parents_mating=4,
+        initial_population=initial_population,
+        fitness_func=fitness_func,
+        num_genes=3,
+        mutation_num_genes=1,
+        parent_selection_type="sss",
+        crossover_type="single_point",
+        mutation_type="random",
+        on_generation=on_generation
+    )
+
+    ga_instance.run()
+
+    solution, solution_fitness, solution_idx = ga_instance.best_solution()
+
+    print("\nBest parameters found:")
+    print("alpha:", solution[0])
+    print("beta:", solution[1])
+    print("depth:", int(solution[2]))
+    print("fitness:", solution_fitness)

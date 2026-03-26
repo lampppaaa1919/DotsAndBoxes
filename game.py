@@ -1,9 +1,6 @@
 import random
-import math
-import pygad
 
-from searching_framework import Problem, astar_search, minimax
-from searching_framework.expectimax import *
+from searching_framework import Problem, minimax
 
 
 class DotsAndBoxes(Problem):
@@ -25,6 +22,18 @@ class DotsAndBoxes(Problem):
                 allLines[totalLines] = ((i, j), (i, j + 1))
                 totalLines += 1
         return allLines
+
+    def get_all_squares(self):
+        allSquares = []
+        for i in range(self.n):
+            for j in range(self.m):
+                allSquares.append((i, j))
+        return allSquares
+
+    # def plr_conquers(self, i, j):
+    #
+    # def opp_conquers(self, i, j):
+    #
 
     def get_all_lines_length(self):
         allLines = self.all_lines
@@ -87,6 +96,13 @@ class DotsAndBoxes(Problem):
         if ((i + 1, j), (i + 1, j + 1)) in conq_lines.values(): n += 1
         return self.get_all_lines_length() - n
 
+    def get_state(self, state):
+        plr, opp, turn, drawn = state
+        board = [0] * self.get_all_lines_length()
+        for line_id in drawn:
+            board[line_id] = 1
+        return board
+
     def actions(self, state):
         plr, opp, turn, drawn = state
         available = [id_line for id_line in self.all_lines if id_line not in drawn]
@@ -105,12 +121,20 @@ class DotsAndBoxes(Problem):
         available_lines = set(allLines.keys()) - set(conq_lines)
         for line_id in available_lines:
             new_pts, new_conq = self.close_boxes(line_id, conq_lines)
-            if turn == "agent-a":
-                new_state = (plr + new_pts, opp, "agent-b", frozenset(new_conq))
-                succs[f"Plr draws line {line_id}"] = new_state
+            if new_pts > 0:
+                if turn == "agent-a":
+                    new_state = (plr + new_pts, opp, "agent-a", frozenset(new_conq))
+                    succs[f"Plr draws line {line_id}"] = new_state
+                else:
+                    new_state = (plr, opp + new_pts, "agent-b", frozenset(new_conq))
+                    succs[f"Opp draws line {line_id}"] = new_state
             else:
-                new_state = (plr, opp + new_pts, "agent-a", frozenset(new_conq))
-                succs[f"Opp draws line {line_id}"] = new_state
+                if turn == "agent-a":
+                    new_state = (plr + new_pts, opp, "agent-b", frozenset(new_conq))
+                    succs[f"Plr draws line {line_id}"] = new_state
+                else:
+                    new_state = (plr, opp + new_pts, "agent-a", frozenset(new_conq))
+                    succs[f"Opp draws line {line_id}"] = new_state
         return succs
 
     def goal_test(self, state):
@@ -137,50 +161,49 @@ class DotsAndBoxes(Problem):
         return (ptsPlr - ptsOpp) + almost
 
 
-if __name__ == "__main__":
-    game = DotsAndBoxes((0, 0, "agent-a", frozenset()), 3, 3)
-    state = game.initial
-    plr, opp, turn, drawn_set = state
-    while not game.goal_test(state):
-        if turn == "agent-a":
+def new_game(n=3, m=3):
+    return DotsAndBoxes((0, 0, "agent-a", frozenset()), n, m)
 
-            action = minimax.best_move(game, state, depth=3, is_maximizing=True,2)
-            # action = random.choice(game.actions(state))
-            #genetski - ucenje
+
+def play_game(depth=3, n=3, m=3):
+    game = new_game(n, m)
+    state = game.initial
+
+    while not game.goal_test(state):
+        plr, opp, turn, drawn = state
+        if turn == "agent-a":
+            action = minimax.best_move(game, state, depth=depth, is_maximizing=True)
         else:
-            action = minimax.best_move(game, state, depth=3, is_maximizing=False)
-            # action = random.choice(game.actions(state))
-            #genetski - testiranje
+            action = random.choice(game.actions(state))
         state = game.result(state, action)
-        plr, opp, turn, drawn_set = state
-        print(f"{action}")
-        print(f"Plr: {plr} Opp: {opp}")
-    winner = "PLR" if plr>opp else "OPP" if opp>plr else "DRAW"
+
+    plr, opp, _, _ = state
+    return plr - opp
+
+
+def play_full_game(depth=3, n=3, m=3, case=1):
+    """Play a game and print each move, plus the final winner."""
+    game = new_game(n, m)
+    state = game.initial
+    plr, opp = 0, 0
+
+    while not game.goal_test(state):
+        plr, opp, turn, drawn = state
+        if turn =="agent-a":
+            #train
+            action = minimax.best_move(game, state, depth=depth, is_maximizing=True,case=case)
+        else:
+            #test
+            action = minimax.best_move(game, state, depth=depth, is_maximizing=False,case=case)
+            # action = random.choice(game.actions(state))
+        state = game.result(state, action)
+        plr, opp, turn, drawn = state
+        print(f"{action} \n Plr: {plr} Opp: {opp}")
+
+    winner = "PLR" if plr > opp else "OPP" if opp > plr else "DRAW"
     print(f"WINNER: {winner}")
 
-    # lines_dict = game.get_all_lines()
-    # print(f"Lines: {lines_dict}")
-    # lines_len = game.get_all_lines_length()
-    # print(f"Total lines: {lines_len}")
-    # lines_sq = game.num_squares()
-    # print(f"Total squares: {lines_sq}")
-    # line_scene = game.close_boxes(3,frozenset({0,1,2,4,6}))
-    # print(f"Drawing a line: {line_scene}")
-    #
-    # print("ACTIONS:")
-    # a=game.actions((0,0,"agent-b",frozenset({2,4})))
-    # print(a)
-    # print("RESULTS:")
-    # r = game.result((0,0,"agent-b",frozenset({2,4})),a[0])
-    # print(r)
-    # print("SUCCESSORS:")
-    # s = game.successor((0,0,"agent-a",frozenset({2,4})))
-    # print(s)
-    # print("GOAL")
-    # g = game.goal_test((0,0,"agent-a",frozenset({2,4})))
-    # print(g)
-    # print("HEURISTIC")
-    # h = game.h(Node((0,0,"agent-a",frozenset({2,4}))))
-    # print(h)
-    # game_test_case=game.close_boxes(7,frozenset({3,4,8}))
-    # print(game_test_case[0])
+
+if __name__ == "__main__":
+    # play a simple 3x3 game
+    play_full_game(depth=3)
