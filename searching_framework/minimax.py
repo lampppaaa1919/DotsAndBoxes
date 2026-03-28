@@ -4,8 +4,11 @@ import numpy as np
 ALPHA = -np.inf
 BETA = np.inf
 
+cache = {}
 
 def minimax(game, state, depth, is_maximizing, alpha=ALPHA, beta=BETA):
+
+    # key = (tuple(state[3]),state[2],depth)
 
     if depth == 0 or game.goal_test(state):
         return game.h(state)
@@ -55,7 +58,7 @@ def minimax_prune(game, state, depth, is_maximizing, alpha=ALPHA, beta=BETA):
 def minimax_asc(game, state, depth, is_maximizing, alpha=ALPHA, beta=BETA):
 
     if depth == 0 or game.goal_test(state):
-        return game.h(state,alpha,beta)
+        return game.h(state)
 
     succs = game.successor(state)
 

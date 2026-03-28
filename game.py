@@ -149,7 +149,10 @@ class DotsAndBoxes(Problem):
 
     def goal_test(self, state):
         # ptsPlr, ptsOpp, turn, drawnLines = state
-        return len(state[3]) == self.get_all_lines_length()
+        return len(state[3]) == self.get_all_lines_length() \
+                or state[0] > self.num_squares()//2 \
+                or state[1] > self.num_squares()//2 \
+
 
     def get_almost(self, state):
         ptsPlr, ptsOpp, turn, drawnLinesIds = state
@@ -181,17 +184,20 @@ def play_game(alpha=1.0, beta=-1.0, depth=3):
     state = game.initial
     almost = 0
     plr, opp, _, _ = state
+    r = random.random()
     while not game.goal_test(state):
         plr, opp, turn, drawn = state
         if turn == "agent-a":
             action = minimax.best_move(game, state, depth=depth, is_maximizing=True, case=1)
         else:
-            # action = random.choice(game.actions(state))
-            action = minimax.best_move(game, state, depth=depth - 1, is_maximizing=False, case=1)
+            if r >= 0.5:
+                action = minimax.best_move(game, state, depth=depth - 1, is_maximizing=False, case=1)
+            else:
+                action = random.choice(game.actions(state))
         state = game.result(state, action)
         almost = game.get_almost(state)
 
-    return (plr - opp) * alpha + almost * beta
+    return (plr - opp) * alpha * r + (opp - plr) * beta
 
 
 def play_full_game(depth, n, m, case):
@@ -207,10 +213,10 @@ def play_full_game(depth, n, m, case):
         else:
             # test
             r = random.random()
-            if r < 0.5:
-                action = random.choice(game.actions(state))
+            if r >= 0.5:
+                action = minimax.best_move(game, state, depth=depth, is_maximizing=False, case=case)
             else:
-                action = minimax.best_move(game, state, depth=depth - 1, is_maximizing=False, case=case)
+                action = random.choice(game.actions(state))
         state = game.result(state, action)
         plr, opp, turn, drawn = state
         print(f"{action} \n Plr: {plr} Opp: {opp}")
@@ -220,4 +226,4 @@ def play_full_game(depth, n, m, case):
 
 
 if __name__ == "__main__":
-    play_full_game(2, 3, 3, 2)
+    play_full_game(2, 5, 5, 4)

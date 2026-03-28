@@ -2,9 +2,9 @@ import random
 import pygad
 from game import play_game
 
-num_generations = 3
-num_genomes = 10
-games_per_fitness = 3
+num_generations = 15
+num_genomes = 4
+games_per_fitness = 2
 depth_min, depth_max = 1, 3
 
 
@@ -17,20 +17,14 @@ def generate_pop(num_genomes):
         population.append([alpha, beta, depth])
     return population
 
-fitness_cache = {}
-
 def fitness_func(ga_instance, solution, solution_idx):
     alpha, beta, depth = solution
     depth = max(1, int(depth))
-    key = (round(alpha, 3), round(beta, 3), depth)
-    if key in fitness_cache:
-        return fitness_cache[key]
     score = 0
     for _ in range(games_per_fitness):
         score += play_game(alpha, beta, depth)
     fitness = score / games_per_fitness
-    fitness_cache[key] = fitness
-
+    print(f"Genome #{solution_idx}: {solution}")
     return fitness
 
 
@@ -38,7 +32,7 @@ def on_generation(ga_instance):
     best_solution, best_fitness, _ = ga_instance.best_solution()
     print(f"Generation {ga_instance.generations_completed}: "
           f"Best fitness = {best_fitness:.2f}, "
-          f"Params = {best_solution}")
+          f"Params = {best_solution}\n")
 
 
 if __name__ == "__main__":
@@ -55,8 +49,8 @@ if __name__ == "__main__":
         parent_selection_type="sss",
         crossover_type="single_point",
         on_generation=on_generation,
+        parallel_processing=["thread",None],
         save_solutions=True,
-        parallel_processing=["thread",None]
     )
 
     ga_instance.run()
