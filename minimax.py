@@ -1,14 +1,10 @@
-import math
 import numpy as np
 
 ALPHA = -np.inf
 BETA = np.inf
 
-cache = {}
 
 def minimax(game, state, depth, is_maximizing, alpha=ALPHA, beta=BETA):
-
-    # key = (tuple(state[3]),state[2],depth)
 
     if depth == 0 or game.goal_test(state):
         return game.h(state)
@@ -18,14 +14,14 @@ def minimax(game, state, depth, is_maximizing, alpha=ALPHA, beta=BETA):
     if is_maximizing:
         maxEval = ALPHA
         for action, new_state in succs.items():
-            eval = minimax(game, new_state, depth - 1, False, alpha, beta)
+            eval = minimax(game, new_state, depth - 1, False)
             maxEval = max(maxEval, eval)
             alpha = max(alpha, eval)
         return maxEval
     else:
         minEval = BETA
         for action, new_state in succs.items():
-            eval = minimax(game, new_state, depth - 1, True,alpha,beta)
+            eval = minimax(game, new_state, depth - 1, True)
             minEval = min(minEval, eval)
             beta = min(beta, eval)
         return minEval
@@ -39,7 +35,7 @@ def minimax_prune(game, state, depth, is_maximizing, alpha=ALPHA, beta=BETA):
     if is_maximizing:
         max_eval = ALPHA
         for action, new_state in succs.items():
-            eval = minimax(game, new_state, depth - 1, False, alpha, beta)
+            eval = minimax_prune(game, new_state, depth - 1, False, alpha, beta)
             max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
             if beta <= alpha:
@@ -48,7 +44,7 @@ def minimax_prune(game, state, depth, is_maximizing, alpha=ALPHA, beta=BETA):
     else:
         minEval = BETA
         for action, new_state in succs.items():
-            eval = minimax(game, new_state, depth - 1, True,alpha,beta)
+            eval = minimax_prune(game, new_state, depth - 1, True, alpha, beta)
             minEval = min(minEval, eval)
             beta = min(beta, eval)
             if beta <= alpha:
@@ -113,7 +109,7 @@ def minimax_desc(game, state, depth, is_maximizing, alpha=ALPHA, beta=BETA):
                 break
         return minEval
 
-def best_move(game, state, depth, is_maximizing, case = 2):
+def best_move(game, state, depth, is_maximizing, case):
     best_val = ALPHA
     best_action = None
     successors = game.successor(state)
